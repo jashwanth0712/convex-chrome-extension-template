@@ -1,0 +1,11 @@
+{
+  "manifest_version": 3,
+  "name": "Convex Todo",
+  "description": "A real-time todo list powered by Convex",
+  "version": "0.0.1",
+  "action": {
+    "default_popup": "index.html",
+    "default_title": "Convex Todo"
+  },
+  "permissions": ["storage"]
+}
