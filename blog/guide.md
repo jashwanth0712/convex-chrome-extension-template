@@ -1,4 +1,5 @@
 # Using convex in Chrome extensions
+
 chrome extensions are very powerful tools , They help us customize the browser, automate tasks, and build productivity workflows. When combined with Convex, they become even more powerful by adding a real-time backend with minimal setup.
 
 ## Why Convex?
@@ -7,13 +8,13 @@ let's say we're building a todo list chrome extension. most chrome extensions th
 
 this is what a traditional setup would look like for a todo list app:
 
-![Traditional Architecture](./images/traditional-architecture.png)
+Traditional Architecture
 
 we're managing a REST API server, a separate auth service for JWT and sessions, a database with migrations and connection pooling, a WebSocket server for real-time updates, and then all the DevOps — Docker, CI/CD, SSL certs, scaling, monitoring. That's a lot of moving pieces for what might just be a simple extension.
 
 now here's the same extension with Convex:
 
-![Convex Architecture](./images/convex-architecture.png)
+Convex Architecture
 
 the chrome extension opens a single WebSocket connection to Convex, and everything else right from database, real-time subscriptions, serverless functions, auth, scaling is handled for us.
 
@@ -26,7 +27,7 @@ that's it. No server to deploy, no database to provision, no WebSocket plumbing 
 
 to really put this in perspective, here's a side-by-side comparison of what we're responsible for in each approach:
 
-![Setup Comparison](./images/setup-comparison.png)
+Setup Comparison
 
 ### what makes Convex a good fit for chrome extensions specifically?
 
@@ -34,7 +35,7 @@ to really put this in perspective, here's a side-by-side comparison of what we'r
 
 here's how the real-time sync flow works under the hood:
 
-![Real-Time Sync Flow](./images/realtime-sync-flow.png)
+Real-Time Sync Flow
 
 **no server to manage.** chrome extensions already run in a pretty constrained environment. Adding a backend server on top means dealing with deployment, uptime, CORS and all that. With Convex we skip all of it — our extension talks directly to the Convex cloud.
 
@@ -42,7 +43,7 @@ here's how the real-time sync flow works under the hood:
 
 here's how the types flow from schema definition all the way to the frontend:
 
-![Type Safety Flow](./images/type-safety-flow.png)
+Type Safety Flow
 
 **instant iteration.** we run `npx convex dev` and our backend functions hot-reload as we save. Pair that with Vite's HMR for the popup UI and we get sub-second feedback on both frontend and backend changes.
 
@@ -93,6 +94,7 @@ npm install -D vite @vitejs/plugin-react @crxjs/vite-plugin tailwindcss @tailwin
 ```
 
 a quick overview of what we're using:
+
 - **convex** — our backend, handles database and real-time sync
 - **@crxjs/vite-plugin** — lets us build chrome extensions with Vite and gives us HMR during development
 - **tailwindcss + @tailwindcss/vite** — Tailwind v4 with zero-config Vite integration
@@ -115,7 +117,7 @@ the `dev` script is the important one — it runs both Convex and Vite in parall
 
 here's how the development workflow looks when we run `npm run dev`:
 
-![Dev Workflow](./images/dev-workflow.png)
+Dev Workflow
 
 lastly we need a `vite.config.ts` to wire up our plugins:
 
@@ -266,6 +268,7 @@ export const remove = mutation({
 ```
 
 four functions and that's our entire backend:
+
 - `list` — queries all todos, newest first
 - `add` — inserts a new todo with `isCompleted: false`
 - `toggle` — flips the `isCompleted` field
@@ -275,7 +278,7 @@ notice how `args` are validated with `v.string()` and `v.id("todos")` — Convex
 
 here's how queries and mutations flow through the system:
 
-![Data Flow](./images/data-flow.png)
+Data Flow
 
 ### step 5: React popup
 
@@ -422,7 +425,7 @@ this runs `convex dev` and `vite` in parallel. Convex watches our backend files 
 
 to load the extension in Chrome, follow these steps:
 
-![Chrome Loading Steps](./images/chrome-loading-steps.png)
+Chrome Loading Steps
 
 1. go to `chrome://extensions/`
 2. enable "Developer mode" (toggle in the top right)
@@ -433,3 +436,8 @@ we should see "No todos yet. Add one above!" — add a few todos, toggle them, d
 
 to really see the real-time sync in action, run `npx convex dashboard` in another terminal. Edit a todo directly in the dashboard and watch it update in the extension popup instantly — no refresh needed.
 
+## takeaway
+
+a chrome extension popup is just a web page. It can run React, open WebSockets, and talk to any backend which means Convex works out of the box. no adapters, no hacks. just `ConvexReactClient` in a popup instead of a tab.
+
+we got a real-time, type-safe, serverless backend in a chrome extension with two backend files and one React component. 
