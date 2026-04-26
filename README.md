@@ -12,10 +12,11 @@
 
 ## What's inside
 
-- **Real-time sync** — `useQuery()` opens a WebSocket subscription; any change in the database updates every open popup instantly
-- **Zero backend ops** — no server, no database provisioning, no DevOps
-- **Type-safe end-to-end** — schema, backend functions, and React share one TypeScript type system
-- **Hot reload** — `convex dev` redeploys backend on save; Vite HMR handles the popup
+- **Chrome MV3 popup** — `manifest.json` + `index.html` wired to a React app via `@crxjs/vite-plugin`
+- **Convex backend** — `schema.ts` with a todos table, `todos.ts` with `list`, `add`, `toggle`, `remove` functions
+- **React frontend** — `ConvexProvider` in `main.tsx`, `useQuery` + `useMutation` calls in `App.tsx`
+- **Tailwind CSS v4** — zero-config via `@tailwindcss/vite`
+- **Parallel dev** — `npm run dev` runs `convex dev` and `vite` together via `npm-run-all`
 
 ## Stack
 
