@@ -6,38 +6,34 @@ chrome extensions are very powerful tools , They help us customize the browser, 
 
 let's say we're building a todo list chrome extension. most chrome extensions that need a backend end up requiring a lot of setup , we need to spin up a server, configure a database, handle authentication, set up real-time sync and all of this before we even start working on the actual extension logic.
 
-this is what a traditional setup would look like for a todo list app:
+here's a side-by-side look at what each approach actually requires:
 
-Traditional Architecture
 
-we're managing a REST API server, a separate auth service for JWT and sessions, a database with migrations and connection pooling, a WebSocket server for real-time updates, and then all the DevOps — Docker, CI/CD, SSL certs, scaling, monitoring. That's a lot of moving pieces for what might just be a simple extension.
+| Concern            | Traditional Stack                       | Convex                            |
+| ------------------ | --------------------------------------- | --------------------------------- |
+| **API layer**      | REST server (Express, FastAPI, etc.)    | Serverless functions in `convex/` |
+| **Auth**           | Separate JWT / session service          | Built-in (`@convex-dev/auth`)     |
+| **Database**       | Provision, migrate, connection pool     | Managed: define schema, done      |
+| **Real-time**      | WebSocket server + pub/sub wiring       | Automatic via `useQuery()`        |
+| **DevOps**         | Docker, CI/CD, SSL, scaling, monitoring | None (handled by Convex cloud)    |
+| **What you write** | Many services across many files         | `schema.ts` + `todos.ts`          |
 
-now here's the same extension with Convex:
 
-Convex Architecture
+with the traditional stack we're managing a REST API server, a separate auth service for JWT and sessions, a database with migrations and connection pooling, a WebSocket server for real-time updates, and then all the DevOps: Docker, CI/CD, SSL certs, scaling, monitoring. That's a lot of moving pieces for what might just be a simple extension.
 
-the chrome extension opens a single WebSocket connection to Convex, and everything else right from database, real-time subscriptions, serverless functions, auth, scaling is handled for us.
-
-what we actually end up writing is just two files:
-
-- `schema.ts` — to define our tables
-- `todos.ts` — our queries and mutations as plain TypeScript functions
-
-that's it. No server to deploy, no database to provision, no WebSocket plumbing to worry about.
-
-to really put this in perspective, here's a side-by-side comparison of what we're responsible for in each approach:
-
-Setup Comparison
+with Convex, the chrome extension opens a single WebSocket connection to Convex and everything else (database, real-time subscriptions, serverless functions, auth, scaling) is handled for us. No server to deploy, no database to provision, no WebSocket plumbing to worry about.
 
 ### what makes Convex a good fit for chrome extensions specifically?
 
-**real-time sync just works.** we call `useQuery()` in the popup and it subscribes over a WebSocket automatically. If we change data from the Convex dashboard, another extension instance, or even a web app — the popup updates instantly. We don't write any sync logic ourselves.
+**Real-time sync works out of the box.** My most loved feature about Convex is its reactiveness: we call `useQuery()` in the popup and it subscribes over a WebSocket automatically. If we change data from the Convex dashboard, another extension instance, or even a web app, the popup updates instantly. We don't write any sync logic ourselves.
+
+![Convex Todo demo](video/demo.gif)
 
 here's how the real-time sync flow works under the hood:
 
 Real-Time Sync Flow
 
-**no server to manage.** chrome extensions already run in a pretty constrained environment. Adding a backend server on top means dealing with deployment, uptime, CORS and all that. With Convex we skip all of it — our extension talks directly to the Convex cloud.
+**no server to manage.** chrome extensions already run in a pretty constrained environment. Adding a backend server on top means dealing with deployment, uptime, CORS and all that. With Convex we skip all of it. Our extension talks directly to the Convex cloud.
 
 **TypeScript end-to-end.** our schema, backend functions, and React frontend all share the same type system. When we call `api.todos.add` in the popup, TypeScript already knows the exact argument shape because it's inferred from the mutation we wrote in `convex/todos.ts`.
 
@@ -47,7 +43,7 @@ Type Safety Flow
 
 **instant iteration.** we run `npx convex dev` and our backend functions hot-reload as we save. Pair that with Vite's HMR for the popup UI and we get sub-second feedback on both frontend and backend changes.
 
-**great for side projects.** most chrome extensions start as personal tools or small utilities. Convex's free tier covers this easily — no idle server costs, no database hosting fees.
+**great for side projects.** most chrome extensions start as personal tools or small utilities. Convex's free tier covers this easily: no idle server costs, no database hosting fees.
 
 ## Building the Todo List Extension
 
@@ -95,10 +91,10 @@ npm install -D vite @vitejs/plugin-react @crxjs/vite-plugin tailwindcss @tailwin
 
 a quick overview of what we're using:
 
-- **convex** — our backend, handles database and real-time sync
-- **@crxjs/vite-plugin** — lets us build chrome extensions with Vite and gives us HMR during development
-- **tailwindcss + @tailwindcss/vite** — Tailwind v4 with zero-config Vite integration
-- **npm-run-all** — runs our Convex backend and Vite frontend dev servers in parallel
+- **convex**: our backend, handles database and real-time sync
+- **@crxjs/vite-plugin**: lets us build chrome extensions with Vite and gives us HMR during development
+- **tailwindcss + @tailwindcss/vite**: Tailwind v4 with zero-config Vite integration
+- **npm-run-all**: runs our Convex backend and Vite frontend dev servers in parallel
 
 we also need to add a few scripts to our `package.json`. Open it up and add these:
 
@@ -113,7 +109,7 @@ we also need to add a few scripts to our `package.json`. Open it up and add thes
 }
 ```
 
-the `dev` script is the important one — it runs both Convex and Vite in parallel so we get backend hot-reloading and frontend HMR at the same time.
+the `dev` script is the important one: it runs both Convex and Vite in parallel so we get backend hot-reloading and frontend HMR at the same time.
 
 here's how the development workflow looks when we run `npm run dev`:
 
@@ -141,7 +137,7 @@ export default defineConfig({
 });
 ```
 
-the `crx()` plugin reads our manifest and handles all the chrome extension build stuff. the `server.cors` and `legacy` settings are needed because Vite 6 introduced stricter security that breaks chrome extension dev mode — these let the extension talk to the Vite dev server.
+the `crx()` plugin reads our manifest and handles all the chrome extension build stuff. the `server.cors` and `legacy` settings are needed because Vite 6 introduced stricter security that breaks chrome extension dev mode; these let the extension talk to the Vite dev server.
 
 ### step 2: chrome extension manifest
 
@@ -161,7 +157,7 @@ create `manifest.json`:
 }
 ```
 
-this is a minimal MV3 manifest. We only need a popup — no background service worker, no content scripts. The `action.default_popup` tells Chrome to show `index.html` when the extension icon is clicked.
+this is a minimal MV3 manifest. We only need a popup: no background service worker, no content scripts. The `action.default_popup` tells Chrome to show `index.html` when the extension icon is clicked.
 
 ### step 3: popup HTML entry
 
@@ -194,7 +190,7 @@ body {
 }
 ```
 
-the `width` and `min-height` on body are important — chrome extension popups don't have a default size, so without this our popup would collapse to nothing. 380x500 gives us a nice compact window.
+the `width` and `min-height` on body are important: chrome extension popups don't have a default size, so without this our popup would collapse to nothing. 380x500 gives us a nice compact window.
 
 also create `src/vite-env.d.ts` so TypeScript knows about Vite's types:
 
@@ -210,7 +206,7 @@ this is where the backend comes in. Run:
 npx convex dev
 ```
 
-this will ask us to log in and create a new Convex project. Once done, it generates a `.env.local` file with our `VITE_CONVEX_URL` — that's the URL our extension will use to connect to Convex.
+this will ask us to log in and create a new Convex project. Once done, it generates a `.env.local` file with our `VITE_CONVEX_URL`, which is the URL our extension will use to connect to Convex.
 
 now create `convex/schema.ts` to define our todos table:
 
@@ -226,7 +222,7 @@ export default defineSchema({
 });
 ```
 
-just two fields — `text` and `isCompleted`. Convex automatically gives us `_id` and `_creationTime` on every document, so we don't need to define those.
+just two fields: `text` and `isCompleted`. Convex automatically gives us `_id` and `_creationTime` on every document, so we don't need to define those.
 
 next create `convex/todos.ts` with our backend functions:
 
@@ -269,12 +265,12 @@ export const remove = mutation({
 
 four functions and that's our entire backend:
 
-- `list` — queries all todos, newest first
-- `add` — inserts a new todo with `isCompleted: false`
-- `toggle` — flips the `isCompleted` field
-- `remove` — deletes a todo
+- `list`: queries all todos, newest first
+- `add`: inserts a new todo with `isCompleted: false`
+- `toggle`: flips the `isCompleted` field
+- `remove`: deletes a todo
 
-notice how `args` are validated with `v.string()` and `v.id("todos")` — Convex validates these at runtime and generates TypeScript types from them automatically.
+notice how `args` are validated with `v.string()` and `v.id("todos")`. Convex validates these at runtime and generates TypeScript types from them automatically.
 
 here's how queries and mutations flow through the system:
 
@@ -282,7 +278,7 @@ Data Flow
 
 ### step 5: React popup
 
-create `src/main.tsx` — this is where we connect React to Convex:
+create `src/main.tsx`, which is where we connect React to Convex:
 
 ```tsx
 import { StrictMode } from "react";
@@ -304,7 +300,7 @@ createRoot(document.getElementById("root")!).render(
 
 we create a `ConvexReactClient` with the URL from our `.env.local` and wrap our app in `ConvexProvider`. This gives every component access to Convex queries and mutations.
 
-now create `src/App.tsx` — the actual todo UI:
+now create `src/App.tsx` for the actual todo UI:
 
 ```tsx
 import { useState } from "react";
@@ -409,9 +405,9 @@ export default function App() {
 }
 ```
 
-the key thing to notice here is how little code we need for a fully real-time app. `useQuery(api.todos.list)` sets up a WebSocket subscription — whenever any todo changes in the database, this component re-renders automatically. The mutations (`addTodo`, `toggleTodo`, `removeTodo`) are just function calls, no fetch requests or error handling boilerplate.
+the key thing to notice here is how little code we need for a fully real-time app. `useQuery(api.todos.list)` sets up a WebSocket subscription; whenever any todo changes in the database, this component re-renders automatically. The mutations (`addTodo`, `toggleTodo`, `removeTodo`) are just function calls, no fetch requests or error handling boilerplate.
 
-we also handle three states — loading (when `todos` is `undefined`), empty list, and populated list. The delete button is hidden by default and only shows on hover using Tailwind's `group-hover`.
+we also handle three states: loading (when `todos` is `undefined`), empty list, and populated list. The delete button is hidden by default and only shows on hover using Tailwind's `group-hover`.
 
 ### step 6: run it
 
@@ -430,11 +426,11 @@ Chrome Loading Steps
 1. go to `chrome://extensions/`
 2. enable "Developer mode" (toggle in the top right)
 3. click "Load unpacked" and select the `dist/` folder in our project
-4. click the extension icon in the toolbar — our todo popup should open
+4. click the extension icon in the toolbar and the todo popup should open
 
-we should see "No todos yet. Add one above!" — add a few todos, toggle them, delete them. Everything syncs to Convex in real-time.
+we should see "No todos yet. Add one above!". Add a few todos, toggle them, delete them. Everything syncs to Convex in real-time.
 
-to really see the real-time sync in action, run `npx convex dashboard` in another terminal. Edit a todo directly in the dashboard and watch it update in the extension popup instantly — no refresh needed.
+to really see the real-time sync in action, run `npx convex dashboard` in another terminal. Edit a todo directly in the dashboard and watch it update in the extension popup instantly, no refresh needed.
 
 ## takeaway
 
