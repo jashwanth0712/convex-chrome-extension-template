@@ -15,8 +15,6 @@
 - **Chrome MV3 popup** — `manifest.json` + `index.html` wired to a React app via `@crxjs/vite-plugin`
 - **Convex backend** — `schema.ts` with a todos table, `todos.ts` with `list`, `add`, `toggle`, `remove` functions
 - **React frontend** — `ConvexProvider` in `main.tsx`, `useQuery` + `useMutation` calls in `App.tsx`
-- **Tailwind CSS v4** — zero-config via `@tailwindcss/vite`
-- **Parallel dev** — `npm run dev` runs `convex dev` and `vite` together via `npm-run-all`
 
 ## Stack
 
