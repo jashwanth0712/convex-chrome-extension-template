@@ -1,8 +1,32 @@
 import { useState } from "react";
-import { useQuery, useMutation } from "convex/react";
+import { useQuery, useMutation, useConvexAuth } from "convex/react";
+import { useAuthActions } from "@convex-dev/auth/react";
 import { api } from "../convex/_generated/api";
+import SignInForm from "./SignInForm";
 
 export default function App() {
+  const { isAuthenticated, isLoading } = useConvexAuth();
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col h-screen bg-gray-50">
+        <div className="bg-indigo-600 px-4 py-3 text-white">
+          <h1 className="text-lg font-semibold">Convex Todo</h1>
+        </div>
+        <p className="text-center text-gray-400 mt-12 text-sm">Loading...</p>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <SignInForm />;
+  }
+
+  return <TodoApp />;
+}
+
+function TodoApp() {
+  const { signOut } = useAuthActions();
   const todos = useQuery(api.todos.list);
   const addTodo = useMutation(api.todos.add);
   const toggleTodo = useMutation(api.todos.toggle);
@@ -22,8 +46,14 @@ export default function App() {
   return (
     <div className="flex flex-col h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-indigo-600 px-4 py-3 text-white">
+      <div className="bg-indigo-600 px-4 py-3 text-white flex items-center justify-between">
         <h1 className="text-lg font-semibold">Convex Todo</h1>
+        <button
+          onClick={() => void signOut()}
+          className="text-xs text-indigo-200 hover:text-white"
+        >
+          Sign out
+        </button>
       </div>
 
       {/* Add form */}
@@ -33,12 +63,14 @@ export default function App() {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="What needs to be done?"
-          className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+          className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md
+            focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
         />
         <button
           type="submit"
           disabled={!input.trim()}
-          className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed"
+          className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md
+            hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed"
         >
           Add
         </button>
@@ -49,7 +81,9 @@ export default function App() {
         {todos === undefined ? (
           <p className="text-center text-gray-400 mt-12 text-sm">Loading...</p>
         ) : todos.length === 0 ? (
-          <p className="text-center text-gray-400 mt-12 text-sm">No todos yet. Add one above!</p>
+          <p className="text-center text-gray-400 mt-12 text-sm">
+            No todos yet. Add one above!
+          </p>
         ) : (
           <ul className="divide-y divide-gray-100">
             {todos.map((todo) => (
@@ -61,16 +95,20 @@ export default function App() {
                   type="checkbox"
                   checked={todo.isCompleted}
                   onChange={() => toggleTodo({ id: todo._id })}
-                  className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                  className="h-4 w-4 rounded border-gray-300 text-indigo-600
+                    focus:ring-indigo-500 cursor-pointer"
                 />
                 <span
-                  className={`flex-1 text-sm ${todo.isCompleted ? "line-through text-gray-400" : "text-gray-800"}`}
+                  className={`flex-1 text-sm ${
+                    todo.isCompleted ? "line-through text-gray-400" : "text-gray-800"
+                  }`}
                 >
                   {todo.text}
                 </span>
                 <button
                   onClick={() => removeTodo({ id: todo._id })}
-                  className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 text-lg leading-none transition-opacity"
+                  className="opacity-0 group-hover:opacity-100 text-gray-400
+                    hover:text-red-500 text-lg leading-none transition-opacity"
                   aria-label="Delete todo"
                 >
                   &times;
